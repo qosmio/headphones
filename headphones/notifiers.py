@@ -276,24 +276,22 @@ class LMS(object):
 
     def _sendjson(self, host):
         data = {'id': 1, 'method': 'slim.request', 'params': ["", ["rescan"]]}
-        data = json.JSONEncoder().encode(data)
+        data = json.dumps(data, default=lambda x: x.__dict__)
 
-        content = {'Content-Type': 'application/json'}
-
-        req = urllib.request.Request(host + '/jsonrpc.js', data, content)
+        req = urllib.request.Request(f"{host}/jsonrpc.js", data=bytes(data.encode()), method='POST')
 
         try:
             handle = urllib.request.urlopen(req)
         except Exception as e:
-            logger.warn('Error opening LMS url: %s' % e)
+            logger.warn('Error opening LMS url: %s', e)
             return
 
-        response = json.JSONDecoder().decode(handle.read())
+        response = json.loads(handle.read().decode('utf-8'))
 
         try:
             return response['result']
         except:
-            logger.warn('LMS returned error: %s' % response['error'])
+            logger.warn('LMS returned error: %s', response['error'])
             return response['error']
 
     def update(self):
